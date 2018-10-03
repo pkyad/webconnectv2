@@ -1,8 +1,8 @@
 'use strict';
 
-var Meeting = function (socketioHost) { 
+var Meeting = function (socketioHost) {
     var exports = {};
-    
+
     var _isInitiator = false;
     var _localStream;
     var _remoteStream;
@@ -24,7 +24,7 @@ var Meeting = function (socketioHost) {
     var _onChatNotReadyCallback;
     var _onParticipantHangupCallback;
     var _host = socketioHost;
-    
+
     ////////////////////////////////////////////////
     // PUBLIC FUNCTIONS
     ////////////////////////////////////////////////
@@ -33,13 +33,13 @@ var Meeting = function (socketioHost) {
 	 * Add callback function to be called when a chat message is available.
 	 *
 	 * @param name of the room to join
-	 */   
+	 */
     function joinRoom(name) {
         _room = name;
-        
+
         _myID = generateID();
         console.log('Generated ID: '+_myID);
-        
+
         // Open up a default communication channel
         initDefaultChannel();
 
@@ -58,8 +58,8 @@ var Meeting = function (socketioHost) {
             _defaultChannel.emit('message',{type: 'bye', from:_myID});
         }
     }
-    
-    
+
+
     /**
 	 *
 	 * Send a chat message to all channels.
@@ -74,7 +74,7 @@ var Meeting = function (socketioHost) {
 		    }
         }
     }
-    
+
     /**
 	 *
 	 * Toggle microphone availability.
@@ -84,12 +84,12 @@ var Meeting = function (socketioHost) {
 		var tracks = _localStream.getTracks();
 		for (var i = 0; i < tracks.length; i++) {
 			if (tracks[i].kind=="audio") {
-				tracks[i].enabled = !tracks[i].enabled;	
+				tracks[i].enabled = !tracks[i].enabled;
 			}
 		}
 	}
-    
-    
+
+
     /**
 	 *
 	 * Toggle video availability.
@@ -99,11 +99,11 @@ var Meeting = function (socketioHost) {
 		var tracks = _localStream.getTracks();
 		for (var i = 0; i < tracks.length; i++) {
 			if (tracks[i].kind=="video") {
-				tracks[i].enabled = !tracks[i].enabled;	
+				tracks[i].enabled = !tracks[i].enabled;
 			}
 		}
 	}
-	
+
 	/**
 	 *
 	 * Add callback function to be called when remote video is available.
@@ -113,7 +113,7 @@ var Meeting = function (socketioHost) {
     function onRemoteVideo(callback) {
         _onRemoteVideoCallback = callback;
     }
-    
+
 	/**
 	 *
 	 * Add callback function to be called when local video is available.
@@ -123,7 +123,7 @@ var Meeting = function (socketioHost) {
     function onLocalVideo(callback) {
         _onLocalVideoCallback = callback;
     }
-    
+
     /**
 	 *
 	 * Add callback function to be called when chat is available.
@@ -133,7 +133,7 @@ var Meeting = function (socketioHost) {
     function onChatReady(callback) {
 	    _onChatReadyCallback = callback;
     }
-    
+
     /**
 	 *
 	 * Add callback function to be called when chat is no more available.
@@ -143,7 +143,7 @@ var Meeting = function (socketioHost) {
     function onChatNotReady(callback) {
 	    _onChatNotReadyCallback = callback;
     }
-    
+
     /**
 	 *
 	 * Add callback function to be called when a chat message is available.
@@ -153,7 +153,7 @@ var Meeting = function (socketioHost) {
     function onChatMessage(callback) {
         _onChatMessageCallback = callback;
     }
-    
+
     /**
 	 *
 	 * Add callback function to be called when a a participant left the conference.
@@ -163,14 +163,15 @@ var Meeting = function (socketioHost) {
     function onParticipantHangup(callback) {
 	    _onParticipantHangupCallback = callback;
     }
-    
+
     ////////////////////////////////////////////////
     // INIT FUNCTIONS
     ////////////////////////////////////////////////
-    
+
     function initDefaultChannel() {
         _defaultChannel = openSignalingChannel('');
-        
+        console.log('in initDefaultChannel');
+        console.log(_defaultChannel);
         _defaultChannel.on('created', function (room){
           console.log('Created room ' + room);
           _isInitiator = true;
@@ -183,21 +184,21 @@ var Meeting = function (socketioHost) {
         _defaultChannel.on('joined', function (room){
             console.log('This peer has joined room ' + room);
         });
-        
+
         _defaultChannel.on('message', function (message){
             console.log('Client received message:', message);
             if (message.type === 'newparticipant') {
                 var partID = message.from;
-                
+
                 // Open a new communication channel to the new participant
                 _offerChannels[partID] = openSignalingChannel(partID);
-
+                console.log(_offerChannels);
                 // Wait for answers (to offers) from the new participant
                 _offerChannels[partID].on('message', function (msg){
                     if (msg.dest===_myID) {
                         if (msg.type === 'answer') {
                             _opc[msg.from].setRemoteDescription(new RTCSessionDescription(msg.snDescription),
-                                                               setRemoteDescriptionSuccess, 
+                                                               setRemoteDescriptionSuccess,
                                                                setRemoteDescriptionError);
                         } else if (msg.type === 'candidate') {
                             var candidate = new RTCIceCandidate({sdpMLineIndex: msg.label, candidate: msg.candidate});
@@ -215,16 +216,18 @@ var Meeting = function (socketioHost) {
             }
         });
     }
-      
+
     function initPrivateChannel() {
         // Open a private channel (namespace = _myID) to receive offers
         _privateAnswerChannel = openSignalingChannel(_myID);
-
+        console.log(_privateAnswerChannel);
         // Wait for offers or ice candidates
+        console.log('in initPrivateChannel');
         _privateAnswerChannel.on('message', function (message){
             if (message.dest===_myID) {
                 if(message.type === 'offer') {
                     var to = message.from;
+                    console.log("entering to create answer");
                     createAnswer(message, _privateAnswerChannel, to);
                 } else if (message.type === 'candidate') {
                     var candidate = new RTCIceCandidate({sdpMLineIndex: message.label, candidate: message.candidate});
@@ -233,7 +236,7 @@ var Meeting = function (socketioHost) {
             }
         });
     }
-    
+
     function requestTurn(turn_url) {
         var turnExists = false;
         for (var i in _pcConfig.iceServers) {
@@ -263,11 +266,11 @@ var Meeting = function (socketioHost) {
         }
     }
 
-    
+
     ///////////////////////////////////////////
     // UTIL FUNCTIONS
     ///////////////////////////////////////////
-    
+
     /**
 	 *
 	 * Call the registered _onRemoteVideoCallback
@@ -292,11 +295,11 @@ var Meeting = function (socketioHost) {
         return s4() + s4() + "-" + s4() + "-" + s4() + "-" + s4() + "-" + s4() + s4() + s4();
     }
 
-    
+
     ////////////////////////////////////////////////
     // COMMUNICATION FUNCTIONS
     ////////////////////////////////////////////////
-    
+
     /**
 	 *
 	 * Connect to the server and open a signal channel using channel as the channel's name.
@@ -320,7 +323,7 @@ var Meeting = function (socketioHost) {
         _opc[participantId] = new RTCPeerConnection(_pcConfig);
         _opc[participantId].onicecandidate = handleIceCandidateAnswerWrapper(_offerChannels[participantId], participantId);
         _opc[participantId].onaddstream = handleRemoteStreamAdded(participantId);
-        _opc[participantId].onremovestream = handleRemoteStreamRemoved; 
+        _opc[participantId].onremovestream = handleRemoteStreamRemoved;
         _opc[participantId].addStream(_localStream);
 
 		try {
@@ -342,9 +345,9 @@ var Meeting = function (socketioHost) {
                 // Set Opus as the preferred codec in SDP if Opus is present.
                 sessionDescription.sdp = preferOpus(sessionDescription.sdp);
 
-                _opc[participantId].setLocalDescription(sessionDescription, setLocalDescriptionSuccess, setLocalDescriptionError);  
+                _opc[participantId].setLocalDescription(sessionDescription, setLocalDescriptionSuccess, setLocalDescriptionError);
                 console.log('Sending offer to channel '+ channel.name);
-                channel.emit('message', {snDescription: sessionDescription, from:_myID, type:'offer', dest:participantId});        
+                channel.emit('message', {snDescription: sessionDescription, from:_myID, type:'offer', dest:participantId});
             }
         }
 
@@ -361,13 +364,13 @@ var Meeting = function (socketioHost) {
         _apc[to].setRemoteDescription(new RTCSessionDescription(sdp.snDescription), setRemoteDescriptionSuccess, setRemoteDescriptionError);
 
 		_apc[to].ondatachannel = gotReceiveChannel(to);
-		
+
         var onSuccess = function(channel) {
             return function(sessionDescription) {87
                 // Set Opus as the preferred codec in SDP if Opus is present.
                 sessionDescription.sdp = preferOpus(sessionDescription.sdp);
 
-                _apc[to].setLocalDescription(sessionDescription, setLocalDescriptionSuccess, setLocalDescriptionError); 
+                _apc[to].setLocalDescription(sessionDescription, setLocalDescriptionSuccess, setLocalDescriptionError);
                 console.log('Sending answer to channel '+ channel.name);
                 channel.emit('message', {snDescription:sessionDescription, from:_myID,  type:'answer', dest:to});
             }
@@ -381,9 +384,9 @@ var Meeting = function (socketioHost) {
 
 			if (_opc.hasOwnProperty(from)) {
             	_opc[from].close();
-				_opc[from] = null;	
+				_opc[from] = null;
 			}
-            
+
             if (_apc.hasOwnProperty(from)) {
             	_apc[from].close();
 				_apc[from] = null;
@@ -396,13 +399,15 @@ var Meeting = function (socketioHost) {
     ////////////////////////////////////////////////
     // HANDLERS
     ////////////////////////////////////////////////
-    
+
     // SUCCESS HANDLERS
 
     function handleUserMedia(stream) {
         console.log('Adding local stream');
         _onLocalVideoCallback(stream);
+        console.log(stream);
         _localStream = stream;
+        console.log(_localStream.getTracks());
         _defaultChannel.emit('message', {type:'newparticipant', from: _myID});
     }
 
@@ -413,6 +418,7 @@ var Meeting = function (socketioHost) {
     function handleRemoteStreamAdded(from) {
 	    return function(event) {
         	console.log('Remote stream added');
+
 			addRemoteVideo(event.stream, from);
 			_remoteStream = event.stream;
         }
@@ -427,7 +433,7 @@ var Meeting = function (socketioHost) {
                         label: event.candidate.sdpMLineIndex,
                         id: event.candidate.sdpMid,
                         candidate: event.candidate.candidate,
-                        from: _myID, 
+                        from: _myID,
                         dest:to}
                     );
 
@@ -452,34 +458,34 @@ var Meeting = function (socketioHost) {
 		  	_sendChannel[id].onclose = handleReceiveChannelStateChange(id);
 	  	}
 	}
-	
+
 	function handleMessage(event) {
 	  	console.log('Received message: ' + event.data);
 	  	_onChatMessageCallback(event.data);
 	}
-	
+
 	function handleSendChannelStateChange(participantId) {
 		return function() {
 		  	var readyState = _sendChannel[participantId].readyState;
 		  	console.log('Send channel state is: ' + readyState);
-		  	
+
 		  	// check if we have at least one open channel before we set hat ready to false.
 		  	var open = checkIfOpenChannel();
 		  	enableMessageInterface(open);
 	  	}
 	}
-	
+
 	function handleReceiveChannelStateChange(participantId) {
 		return function() {
 		  	var readyState = _sendChannel[participantId].readyState;
 		  	console.log('Receive channel state is: ' + readyState);
-		  	
+
 		  	// check if we have at least one open channel before we set hat ready to false.
 		  	var open = checkIfOpenChannel();
 		  	enableMessageInterface(open);
 	  	}
 	}
-	
+
 	function checkIfOpenChannel() {
 		var open = false;
 	  	for (var channel in _sendChannel) {
@@ -490,10 +496,10 @@ var Meeting = function (socketioHost) {
 		        }
 		    }
         }
-        
+
         return open;
 	}
-	
+
 	function enableMessageInterface(shouldEnable) {
 	    if (shouldEnable) {
 			_onChatReadyCallback();
@@ -501,9 +507,9 @@ var Meeting = function (socketioHost) {
 	    	_onChatNotReadyCallback();
 	  	}
 	}
-    
+
     // ERROR HANDLERS
-    
+
     function handleCreateOfferError(event){
         console.log('createOffer() error: ', event);
     }
@@ -514,6 +520,7 @@ var Meeting = function (socketioHost) {
 
     function handleUserMediaError(error){
         console.log('getUserMedia error: ', error);
+        alert('Please use only one camera at a time')
     }
 
     function setLocalDescriptionError(error) {
@@ -525,8 +532,8 @@ var Meeting = function (socketioHost) {
     }
 
     function addIceCandidateError(error) {}
-    
-    
+
+
     ////////////////////////////////////////////////
     // CODEC
     ////////////////////////////////////////////////
@@ -605,12 +612,12 @@ var Meeting = function (socketioHost) {
       sdpLines[mLineIndex] = mLineElements.join(' ');
       return sdpLines;
     }
-    
+
 
     ////////////////////////////////////////////////
     // EXPORT PUBLIC FUNCTIONS
     ////////////////////////////////////////////////
-    
+
     exports.joinRoom            =       joinRoom;
     exports.toggleMic 			= 		toggleMic;
     exports.toggleVideo			= 		toggleVideo;
@@ -622,5 +629,5 @@ var Meeting = function (socketioHost) {
     exports.sendChatMessage     =       sendChatMessage;
     exports.onParticipantHangup =		onParticipantHangup;
     return exports;
-    
+
 };

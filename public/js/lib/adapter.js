@@ -110,7 +110,10 @@ if (navigator.mozGetUserMedia) {
 
   // Get UserMedia (only difference is the prefix).
   // Code from Adam Barth.
-  getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
+  // getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
+
+  getUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator);
+
 
   // Attach a media stream to an element.
   attachMediaStream = function(element, stream) {

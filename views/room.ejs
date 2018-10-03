@@ -1,29 +1,81 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name='description' content='WebRTC Reference App' />
-		<meta name='viewport' content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
-		<script>var HOST_ADDRESS='<%= hostAddress %>';</script>  
-		<script src='/socket.io/socket.io.js'></script>
-		<script src='/js/lib/adapter.js'></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>		
-		<script src='/js/meeting.js'></script>
-		<script src='/js/room.js'></script>
-		<link rel="stylesheet" type="text/css" href="/css/room.css" media="screen" />
-		<title>Video Conference</title>
-	</head>
 
-	<body>
-		<div class="container">
-			<div id="videos">
-                <div id="videosWrapper">
-				    <div id="localVideoWrap" class='videoWrap'>
-					    <video class="videoBox" id="localVideo" autoplay></video>
-					</div>
-                </div>
+<head>
+	<meta charset="UTF-8" />
+	<meta name='description' content='WebRTC Reference App' />
+	<meta name='viewport' content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
+	<script>
+		var HOST_ADDRESS = '<%= hostAddress %>';
+	</script>
+	<script src='/socket.io/socket.io.js'></script>
+	<script src='/js/lib/adapter.js'></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src='/js/meeting.js'></script>
+	<script src='/js/room.js'></script>
+	<link rel="stylesheet" type="text/css" href="/css/room.css" media="screen" />
+	<title>Video Conference</title>
+</head>
+<body>
+	<ul>
+		<li style="display:inline" id="toggle" >toggle</li>
+		<li style="display:inline" id="mute">Mute</li>
+		<li style="display:inline" id="pause">pause</li>
+	</ul>
+	<div class="container" style="width:100%">
+		<div id="videos">
+			<div id="videosWrapper">
+				<div id="localVideoWrap" class='videoWrap'>
+					<video class="videoBox" id="localVideo" style="height:100%; object-fit: fill;" autoplay></video>
+				</div>
 			</div>
 		</div>
-	</body>
+	</div>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name='description' content='WebRTC Reference App' />
+	<meta name='viewport' content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1'>
+	<script>
+		var HOST_ADDRESS = '<%= hostAddress %>';
+	</script>
+	<script src='/socket.io/socket.io.js'></script>
+	<script src='/js/lib/adapter.js'></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+	<script src='/js/meeting.js'></script>
+	<script src='/js/room.js'></script>
+	<link rel="stylesheet" href="/css/font-awesome.min.css" charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="/css/room.css" media="screen" />
+	<title>Video Conference</title>
+</head>
+
+<div ng-app="app" ng-controller="main">
+	<div style="padding:0px">
+		<ul style="display:flex;list-style:none;font-size:25px; margin:0px;">
+			<li style="margin-right:25px;" id="toggle" ng-click="video=!video" ><i class="fa fa-video-camera"></i></li>
+			<li style="margin-right:25px" id="mute" ng-click="mic=!mic"><i class="fa fa-microphone{{mic? '':'-slash'}}"></i></li>
+			<li style="margin-right:25px" id="pause" ng-click="pause=!pause"><i class="fa fa-{{pause? 'pause':'play'}}"></i></li>
+			<li style="margin-right:15px"><i class="fa fa-times-circle"></i></li>
+
+		</ul>
+	</div>
+	<div class="container" style="width:100%">
+
+		<div id="videos">
+			<div id="videosWrapper">
+				<div id="localVideoWrap" class='videoWrap'>
+					<video class="videoBox" id="localVideo" style="height:100%" autoplay></video>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
 
 </html>

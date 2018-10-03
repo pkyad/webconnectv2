@@ -3,21 +3,22 @@
  *
  *
  */
- 
+
 'use strict';
- 
+
 var nodestatic = require('node-static');
 var express = require('express');
 var path = require('path');
 
 var serverPort = process.env.OPENSHIFT_NODEJS_PORT || 1337
-var serverIpAddress = process.env.OPENSHIFT_NODEJS_IP || 'localhost'
-var socketIoServer = '127.0.0.1';
+var serverIpAddress = process.env.OPENSHIFT_NODEJS_IP || '192.168.1.109'
+var socketIoServer = '192.168.1.109';
 
 ////////////////////////////////////////////////
 // SETUP SERVER
 ////////////////////////////////////////////////
-    
+
+
 var app = express();
 require('./router')(app, socketIoServer);
 
@@ -42,8 +43,15 @@ var io = require('socket.io').listen(server);
 // EVENT HANDLERS
 ////////////////////////////////////////////////
 
+var client =0
 io.sockets.on('connection', function (socket){
-    
+  client++;
+  console.log(client , '******************************************************************************************');
+  //
+  // if (client>2) {
+  //   return
+  // }
+
 	function log(){
         var array = [">>> Message from server: "];
         for (var i = 0; i < arguments.length; i++) {
@@ -56,13 +64,14 @@ io.sockets.on('connection', function (socket){
 		log('Got message: ', message);
         socket.broadcast.to(socket.room).emit('message', message);
 	});
-    
+
 	socket.on('create or join', function (message) {
+    console.log('cammmmmmmmmmmmmmmmmmm');
         var room = message.room;
         socket.room = room;
         var participantID = message.from;
         configNameSpaceChannel(participantID);
-        
+
 		var numClients = io.sockets.clients(room).length;
 
 		log('Room ' + room + ' has ' + numClients + ' client(s)');
@@ -77,11 +86,11 @@ io.sockets.on('connection', function (socket){
 			socket.emit('joined', room);
 		}
 	});
-    
+
     // Setup a communication channel (namespace) to communicate with a given participant (participantID)
     function configNameSpaceChannel(participantID) {
         var socketNamespace = io.of('/'+participantID);
-        
+
         socketNamespace.on('connection', function (socket){
             socket.on('message', function (message) {
                 // Send message to everyone BUT sender
@@ -89,5 +98,10 @@ io.sockets.on('connection', function (socket){
             });
         });
     }
+
+    socket.on('disconnect', function (){
+      console.log('disconnect*************************************888888888888888888888');
+      client = client-1
+    });
 
 });
